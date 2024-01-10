@@ -1,0 +1,36 @@
+events {
+  worker_connections 1024;
+}
+
+http {
+  upstream socketio_backend {
+    # enable sticky session with either "hash" (uses the complete IP address)
+    hash $remote_addr consistent;
+    # or "ip_hash" (uses the first three octets of the client IPv4 address, or the entire IPv6 address)
+    # ip_hash;
+    # or "sticky" (needs commercial subscription)
+    # sticky cookie srv_id expires=1h domain=.example.com path=/;
+
+    server 192.168.31.33:5005; # your first node
+    server 192.168.31.33:5006; # your second node
+    server 192.168.31.33:5007; # ... 
+  }
+
+  server {
+    listen 80;
+
+    location / {
+      proxy_pass http://socketio_backend;
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "Upgrade";
+      proxy_set_header Host $host;
+      proxy_set_header Origin $http_origin;
+
+      add_header 'Access-Control-Allow-Origin' $http_origin;
+      add_header 'Access-Control-Allow-Credentials' 'true';
+
+    }
+  }
+}
+
